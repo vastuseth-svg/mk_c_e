@@ -1,8 +1,34 @@
-import { db } from '../lib/db';
+import { db as defaultDb } from '../lib/db';
 import { categories, products, productImages, tags, productTags } from './schema';
 import { eq } from 'drizzle-orm';
+import { drizzle as nodePostgresDrizzle } from 'drizzle-orm/node-postgres';
+import { Client } from 'pg';
+import dns from 'dns';
+import { promisify } from 'util';
 
-async function seed() {
+const lookupPromise = promisify(dns.lookup);
+
+async function createPgClient(connectionString: string) {
+  const parsed = new URL(connectionString);
+  const hostname = parsed.hostname;
+  const lookup = await lookupPromise(hostname, { family: 4 });
+  const ipAddress = lookup.address;
+  
+  return new Client({
+    host: ipAddress,
+    port: parsed.port ? parseInt(parsed.port) : 5432,
+    user: parsed.username,
+    password: decodeURIComponent(parsed.password),
+    database: parsed.pathname.substring(1),
+    ssl: {
+      rejectUnauthorized: false,
+      servername: hostname
+    }
+  });
+}
+
+
+async function seed(db: any) {
   console.log('Clearing database...');
   await db.delete(productTags);
   await db.delete(tags);
@@ -216,10 +242,24 @@ async function seed() {
   }
 
   console.log('Seeding complete!');
+}
+
+async function main() {
+  if (process.env.POSTGRES_URL) {
+    console.log('Seeding Vercel Postgres using TCP connection...');
+    const client = await createPgClient(process.env.POSTGRES_URL);
+    await client.connect();
+    const dbInstance = nodePostgresDrizzle(client);
+    await seed(dbInstance);
+    await client.end();
+  } else {
+    console.log('Seeding local PGlite...');
+    await seed(defaultDb);
+  }
   process.exit(0);
 }
 
-seed().catch((err) => {
+main().catch((err) => {
   console.error('Seeding failed:', err);
   process.exit(1);
 });
