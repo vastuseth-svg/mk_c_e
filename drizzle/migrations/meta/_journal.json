@@ -43,6 +43,13 @@
       "when": 1782454186918,
       "tag": "0005_demonic_lucky_pierre",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1782458172955,
+      "tag": "0006_panoramic_leader",
+      "breakpoints": true
     }
   ]
 }
