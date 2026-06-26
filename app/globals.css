@@ -820,6 +820,222 @@ a {
   transform: translateX(-50%) translateY(0);
 }
 
+.btn-add-to-cart:not(:disabled) {
+  background-color: var(--text-primary);
+  color: var(--bg-primary);
+  border-color: var(--text-primary);
+  cursor: pointer;
+}
+
+.btn-add-to-cart:not(:disabled):hover {
+  background-color: var(--color-accent);
+  border-color: var(--color-accent);
+  color: var(--bg-card);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-sm);
+}
+
+.btn-add-to-cart:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.variant-selectors-container {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  margin: 8px 0 24px;
+}
+
+.selector-group {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.selected-value-label {
+  font-weight: 500;
+  color: var(--text-secondary);
+  text-transform: capitalize;
+  font-size: 14px;
+  margin-left: 6px;
+}
+
+.color-swatches-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.color-swatch-btn {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  border: 1px solid var(--border-color);
+  background-color: var(--swatch-color);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  transition: var(--transition);
+  position: relative;
+}
+
+.color-swatch-btn:hover {
+  transform: scale(1.12);
+}
+
+.color-swatch-btn.active {
+  box-shadow: 0 0 0 2px var(--bg-primary), 0 0 0 4px var(--color-accent);
+}
+
+.color-swatch-inner {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+}
+
+.size-buttons-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.size-button-btn {
+  padding: 10px 20px;
+  font-size: 14px;
+  font-weight: 500;
+  border: 1px solid var(--border-color);
+  background-color: var(--bg-card);
+  color: var(--text-primary);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.size-button-btn:hover {
+  border-color: var(--color-accent);
+  color: var(--color-accent);
+  transform: translateY(-1px);
+}
+
+.size-button-btn.active {
+  background-color: var(--color-accent);
+  border-color: var(--color-accent);
+  color: #FFFFFF;
+}
+
+.selection-prompt-text {
+  font-size: 13px;
+  color: var(--text-secondary);
+  margin-bottom: 16px;
+  font-style: italic;
+}
+
+.stock-status-container {
+  margin: 12px 0 4px;
+}
+
+.stock-badge {
+  font-size: 13px;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: 4px;
+  display: inline-block;
+}
+
+.stock-badge.in-stock {
+  background-color: rgba(22, 163, 74, 0.1);
+  color: #16a34a;
+}
+
+.stock-badge.in-stock.low-stock {
+  background-color: rgba(217, 119, 6, 0.1);
+  color: #d97706;
+}
+
+.stock-badge.out-of-stock {
+  background-color: rgba(220, 38, 38, 0.1);
+  color: #dc2626;
+}
+
+.notify-me-container {
+  margin-top: 20px;
+  padding: 20px;
+  background-color: rgba(0, 0, 0, 0.02);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-color);
+}
+
+@media (prefers-color-scheme: dark) {
+  .notify-me-container {
+    background-color: rgba(255, 255, 255, 0.02);
+  }
+}
+
+.notify-me-text {
+  font-size: 14px;
+  color: var(--text-secondary);
+  margin-bottom: 12px;
+  line-height: 1.5;
+}
+
+.notify-me-form-row {
+  display: flex;
+  gap: 12px;
+}
+
+.notify-email-input {
+  flex: 1;
+  padding: 10px 16px;
+  font-size: 14px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-color);
+  background-color: var(--bg-card);
+  color: var(--text-primary);
+  outline: none;
+  transition: var(--transition);
+}
+
+.notify-email-input:focus {
+  border-color: var(--color-accent);
+}
+
+.btn-notify-me {
+  padding: 10px 20px;
+  font-size: 14px;
+  font-weight: 600;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--text-primary);
+  background-color: var(--text-primary);
+  color: var(--bg-primary);
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.btn-notify-me:hover {
+  background-color: var(--color-accent);
+  border-color: var(--color-accent);
+  color: #FFFFFF;
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.3s ease-out forwards;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 /* Header Search Form & Transitions */
 .header-search-form {
   display: flex;
