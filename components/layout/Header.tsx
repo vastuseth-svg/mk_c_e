@@ -4,6 +4,8 @@ import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import NavMenu from './NavMenu';
+import { useAuth } from '@/lib/useAuth';
+import SearchBar from './SearchBar';
 
 interface SubCategory {
   id: number;
@@ -19,9 +21,9 @@ interface Category {
 }
 
 export default function Header() {
+  const { user, logout } = useAuth();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [categories, setCategories] = useState<Category[]>([]);
-  const [searchQuery, setSearchQuery] = useState('');
   const [searchOpen, setSearchOpen] = useState(false);
   const router = useRouter();
 
@@ -36,16 +38,6 @@ export default function Header() {
       .catch(err => console.error('Error fetching categories in header:', err));
   }, []);
 
-  const handleSearchSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    const query = searchQuery.trim();
-    if (query) {
-      router.push(`/search?q=${encodeURIComponent(query)}`);
-      setSearchQuery('');
-      setSearchOpen(false);
-    }
-  };
-
   return (
     <header className="header-container">
       <div className="header-content">
@@ -59,35 +51,7 @@ export default function Header() {
         {/* Action icons / Mobile Toggle */}
         <div className="header-actions">
           {/* Active Search Form */}
-          <form onSubmit={handleSearchSubmit} className={`header-search-form ${searchOpen ? 'open' : ''}`}>
-            <input
-              type="text"
-              placeholder="Search products..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="header-search-input"
-              required
-            />
-            <button type="submit" className="header-search-btn" aria-label="Submit Search">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                <circle cx="11" cy="11" r="8"></circle>
-                <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-              </svg>
-            </button>
-            {searchOpen && (
-              <button 
-                type="button" 
-                className="header-search-close" 
-                onClick={() => {
-                  setSearchOpen(false);
-                  setSearchQuery('');
-                }}
-                aria-label="Close search"
-              >
-                ✕
-              </button>
-            )}
-          </form>
+          <SearchBar isOpen={searchOpen} onClose={() => setSearchOpen(false)} />
 
           {!searchOpen && (
             <button 
@@ -102,13 +66,47 @@ export default function Header() {
             </button>
           )}
 
-          {/* User Icon Placeholder */}
-          <button className="header-action-btn" aria-label="Account">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-              <circle cx="12" cy="7" r="4"></circle>
-            </svg>
-          </button>
+          {/* User / Auth Dropdown */}
+          <div className="nav-item" style={{ display: 'inline-flex', alignItems: 'center', position: 'relative', height: 'auto' }}>
+            <button 
+              className="header-action-btn" 
+              aria-label="Account"
+              onClick={() => router.push(user ? '/account' : '/login')}
+            >
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                <circle cx="12" cy="7" r="4"></circle>
+              </svg>
+            </button>
+            <div className="dropdown-menu" style={{ width: '180px', transform: 'translateX(-70%) translateY(10px)' }}>
+              {user ? (
+                <>
+                  <div style={{ padding: '8px 16px', borderBottom: '1px solid var(--border-color)', marginBottom: '8px', fontSize: '13px', fontWeight: '600', color: 'var(--text-secondary)' }}>
+                    Hi, {user.name.split(' ')[0]}
+                  </div>
+                  <Link href="/account" className="dropdown-item">
+                    My Account
+                  </Link>
+                  <button 
+                    onClick={() => logout()} 
+                    className="dropdown-item" 
+                    style={{ width: '100%', border: 'none', background: 'none', cursor: 'pointer', textAlign: 'left', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
+                  >
+                    Logout
+                  </button>
+                </>
+              ) : (
+                <>
+                  <Link href="/login" className="dropdown-item">
+                    Login
+                  </Link>
+                  <Link href="/register" className="dropdown-item">
+                    Register
+                  </Link>
+                </>
+              )}
+            </div>
+          </div>
 
           {/* Cart Icon Placeholder */}
           <button className="header-action-btn" aria-label="Cart">

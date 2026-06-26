@@ -61,6 +61,11 @@ export const users = pgTable('users', {
   role:           varchar('role', { length: 30 }).default('customer'),
   emailVerified:  boolean('email_verified').default(false),
   phoneVerified:  boolean('phone_verified').default(false),
+  refreshTokenHash: text('refresh_token_hash'),
+  refreshTokenExp:  timestamp('refresh_token_exp', { withTimezone: true }),
+  otpHash:        text('otp_hash'),
+  otpExp:         timestamp('otp_exp', { withTimezone: true }),
+  otpAttempts:    integer('otp_attempts').default(0),
   createdAt:      timestamp('created_at').defaultNow()
 }, (table) => ({
   emailUnique: uniqueIndex('users_email_unique').on(table.email).where(sql`${table.email} is not null`),
