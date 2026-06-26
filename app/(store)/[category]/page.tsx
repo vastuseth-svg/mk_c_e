@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { db, schema } from '@/lib/db';
 import { eq, and } from 'drizzle-orm';
+import CategoryProductListing from '@/components/category/CategoryProductListing';
 
 interface CategoryPageProps {
   params: {
@@ -35,11 +36,8 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
         <span className="breadcrumb-separator">›</span>
         <span>{category.name}</span>
       </nav>
-      <h1 className="placeholder-title">{category.name}</h1>
-      <p className="placeholder-text">Products coming in Wave 2</p>
-      <Link href="/" className="btn-primary">
-        Back to Home
-      </Link>
+      <h1 className="category-title">{category.name}</h1>
+      <CategoryProductListing categorySlug={category.slug} />
     </div>
   );
 }

@@ -1,4 +1,4 @@
-import { pgTable, serial, integer, varchar, text, boolean, timestamp, AnyPgColumn, numeric, primaryKey, uniqueIndex } from 'drizzle-orm/pg-core';
+import { pgTable, serial, integer, varchar, text, boolean, timestamp, AnyPgColumn, numeric, primaryKey, uniqueIndex, index } from 'drizzle-orm/pg-core';
 import { sql } from 'drizzle-orm';
 
 export const categories = pgTable('categories', {
@@ -28,12 +28,29 @@ export const products = pgTable('products', {
   metaTitle:        varchar('meta_title', { length: 160 }),
   metaDescription:  varchar('meta_description', { length: 320 }),
   createdAt:        timestamp('created_at').defaultNow()
-});
+}, (table) => ({
+  categoryStatusIdx: index('idx_products_category_status').on(table.categoryId, table.status)
+}));
+
+export const productVariants = pgTable('product_variants', {
+  id:                 serial('id').primaryKey(),
+  productId:          integer('product_id').notNull().references(() => products.id, { onDelete: 'cascade' }),
+  sku:                varchar('sku', { length: 100 }).notNull().unique(),
+  size:               varchar('size', { length: 30 }),
+  color:              varchar('color', { length: 50 }),
+  material:           varchar('material', { length: 80 }),
+  priceOverride:      numeric('price_override', { precision: 10, scale: 2 }),
+  stock:              integer('stock').notNull().default(0),
+  lowStockThreshold:  integer('low_stock_threshold').default(5),
+  createdAt:          timestamp('created_at').defaultNow()
+}, (table) => ({
+  productIdx: index('idx_variants_product').on(table.productId)
+}));
 
 export const productImages = pgTable('product_images', {
   id:           serial('id').primaryKey(),
   productId:    integer('product_id').notNull().references(() => products.id, { onDelete: 'cascade' }),
-  variantId:    integer('variant_id'),  // FK added in VS-04 migration
+  variantId:    integer('variant_id').references(() => productVariants.id, { onDelete: 'set null' }),  // FK added in VS-04 migration
   url:          text('url').notNull(),  // Image URL
   displayOrder: integer('display_order').default(0),
   isPrimary:    boolean('is_primary').default(false)

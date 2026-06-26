@@ -1,5 +1,5 @@
 import { db as defaultDb } from '../lib/db';
-import { categories, products, productImages, tags, productTags } from './schema';
+import { categories, products, productImages, tags, productTags, productVariants } from './schema';
 import { eq } from 'drizzle-orm';
 import { drizzle as nodePostgresDrizzle } from 'drizzle-orm/node-postgres';
 import { Client } from 'pg';
@@ -33,6 +33,7 @@ async function seed(db: any) {
   await db.delete(productTags);
   await db.delete(tags);
   await db.delete(productImages);
+  await db.delete(productVariants);
   await db.delete(products);
   await db.delete(categories);
 
@@ -125,6 +126,13 @@ async function seed(db: any) {
       metaDescription: "Buy our premium 100% cotton Classic Blue Formal Shirt. Breathable, wrinkle-resistant, and perfect for office wear."
     }).returning({ id: products.id });
 
+    await db.insert(productVariants).values([
+      { productId: shirtProd.id, sku: "CBS-BLU-S", size: "S", color: "Blue", material: "Cotton", priceOverride: null, stock: 10 },
+      { productId: shirtProd.id, sku: "CBS-BLU-M", size: "M", color: "Blue", material: "Cotton", priceOverride: null, stock: 15 },
+      { productId: shirtProd.id, sku: "CBS-BLU-L", size: "L", color: "Blue", material: "Cotton", priceOverride: null, stock: 0 },
+      { productId: shirtProd.id, sku: "CBS-BLU-XL", size: "XL", color: "Blue", material: "Cotton", priceOverride: "1299.00", stock: 5 },
+    ]);
+
     await db.insert(productImages).values([
       { productId: shirtProd.id, url: "https://images.unsplash.com/photo-1596755094514-f87e34085b2c?q=80&w=800&auto=format&fit=crop", displayOrder: 1, isPrimary: true },
       { productId: shirtProd.id, url: "https://images.unsplash.com/photo-1583743814966-8936f5b7be1a?q=80&w=800&auto=format&fit=crop", displayOrder: 2, isPrimary: false }
@@ -150,6 +158,12 @@ async function seed(db: any) {
       metaTitle: "Men's Slim Fit Cotton Trousers | Premium Office Chinos",
       metaDescription: "Shop men's slim fit stretch cotton trousers. Breathable, soft, and perfect for a polished office look."
     }).returning({ id: products.id });
+
+    await db.insert(productVariants).values([
+      { productId: trousersProd.id, sku: "MCT-BLK-M", size: "M", color: "Black", material: "Cotton Stretch", priceOverride: null, stock: 8 },
+      { productId: trousersProd.id, sku: "MCT-BLK-L", size: "L", color: "Black", material: "Cotton Stretch", priceOverride: null, stock: 12 },
+      { productId: trousersProd.id, sku: "MCT-BLK-XL", size: "XL", color: "Black", material: "Cotton Stretch", priceOverride: null, stock: 0 },
+    ]);
 
     await db.insert(productImages).values([
       { productId: trousersProd.id, url: "https://images.unsplash.com/photo-1473968512647-3e447244af8f?q=80&w=800&auto=format&fit=crop", displayOrder: 1, isPrimary: true },
@@ -177,9 +191,21 @@ async function seed(db: any) {
       metaDescription: "Shop our stunning crimson Banarasi silk saree with authentic gold zari. Exquisite traditional handloom craftsmanship."
     }).returning({ id: products.id });
 
+    const insertedVariants = await db.insert(productVariants).values([
+      { productId: sareeProd.id, sku: "BSS-RED-FREE", size: "Free Size", color: "Red", material: "Silk", priceOverride: null, stock: 20 },
+      { productId: sareeProd.id, sku: "BSS-BLU-FREE", size: "Free Size", color: "Blue", material: "Silk", priceOverride: "2199.00", stock: 0 },
+      { productId: sareeProd.id, sku: "BSS-GRN-FREE", size: "Free Size", color: "Green", material: "Silk", priceOverride: "2299.00", stock: 15 },
+    ]).returning({ id: productVariants.id, color: productVariants.color });
+
+    const redVariant = insertedVariants.find((v: any) => v.color === 'Red');
+    const blueVariant = insertedVariants.find((v: any) => v.color === 'Blue');
+    const greenVariant = insertedVariants.find((v: any) => v.color === 'Green');
+
     await db.insert(productImages).values([
-      { productId: sareeProd.id, url: "https://images.unsplash.com/photo-1610030469983-98e550d6193c?q=80&w=800&auto=format&fit=crop", displayOrder: 1, isPrimary: true },
-      { productId: sareeProd.id, url: "https://images.unsplash.com/photo-1617627143750-d86bc21e42bb?q=80&w=800&auto=format&fit=crop", displayOrder: 2, isPrimary: false }
+      { productId: sareeProd.id, variantId: null, url: "https://images.unsplash.com/photo-1610030469983-98e550d6193c?q=80&w=800&auto=format&fit=crop", displayOrder: 1, isPrimary: true },
+      { productId: sareeProd.id, variantId: redVariant?.id, url: "https://images.unsplash.com/photo-1610030469983-98e550d6193c?q=80&w=800&auto=format&fit=crop", displayOrder: 1, isPrimary: true },
+      { productId: sareeProd.id, variantId: blueVariant?.id, url: "https://images.unsplash.com/photo-1617627143750-d86bc21e42bb?q=80&w=800&auto=format&fit=crop", displayOrder: 1, isPrimary: true },
+      { productId: sareeProd.id, variantId: greenVariant?.id, url: "https://images.unsplash.com/photo-1583391733956-3750e0ff4e8b?q=80&w=800&auto=format&fit=crop", displayOrder: 1, isPrimary: true }
     ]);
 
     await db.insert(productTags).values([
@@ -202,6 +228,12 @@ async function seed(db: any) {
       metaTitle: "Designer Cotton Kurti | Indigo Blue Block Print",
       metaDescription: "Get the latest Indigo Blue Designer Cotton Kurti. Features hand block prints, premium breathable cotton."
     }).returning({ id: products.id });
+
+    await db.insert(productVariants).values([
+      { productId: kurtiProd.id, sku: "DCK-BLU-S", size: "S", color: "Blue", material: "Cotton", priceOverride: null, stock: 5 },
+      { productId: kurtiProd.id, sku: "DCK-BLU-M", size: "M", color: "Blue", material: "Cotton", priceOverride: null, stock: 0 },
+      { productId: kurtiProd.id, sku: "DCK-BLU-L", size: "L", color: "Blue", material: "Cotton", priceOverride: null, stock: 8 },
+    ]);
 
     await db.insert(productImages).values([
       { productId: kurtiProd.id, url: "https://images.unsplash.com/photo-1608748010899-18f300247112?q=80&w=800&auto=format&fit=crop", displayOrder: 1, isPrimary: true },
@@ -229,6 +261,12 @@ async function seed(db: any) {
       metaTitle: "Floral Print Cotton Salwar Suit | Summer Collection",
       metaDescription: "Shop our light, breathable floral print cotton salwar suit set. Perfect comfort for hot summers and casual outings."
     }).returning({ id: products.id });
+
+    await db.insert(productVariants).values([
+      { productId: suitProd.id, sku: "FCS-PNK-M", size: "M", color: "Pink", material: "Cotton", priceOverride: null, stock: 12 },
+      { productId: suitProd.id, sku: "FCS-PNK-L", size: "L", color: "Pink", material: "Cotton", priceOverride: null, stock: 8 },
+      { productId: suitProd.id, sku: "FCS-PNK-XL", size: "XL", color: "Pink", material: "Cotton", priceOverride: null, stock: 0 },
+    ]);
 
     await db.insert(productImages).values([
       { productId: suitProd.id, url: "https://images.unsplash.com/photo-1610030469668-93535c17b6b3?q=80&w=800&auto=format&fit=crop", displayOrder: 1, isPrimary: true },

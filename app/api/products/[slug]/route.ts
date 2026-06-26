@@ -34,6 +34,12 @@ export async function GET(
       .where(eq(schema.productImages.productId, product.id))
       .orderBy(schema.productImages.displayOrder);
 
+    // Fetch product variants
+    const variants = await db
+      .select()
+      .from(schema.productVariants)
+      .where(eq(schema.productVariants.productId, product.id));
+
     // Fetch product category
     let category = null;
     if (product.categoryId) {
@@ -65,7 +71,30 @@ export async function GET(
         url: img.url,
         is_primary: img.isPrimary,
         display_order: img.displayOrder,
+        variant_id: img.variantId,
       })),
+      variants: variants.map((v: any) => {
+        const variantImages = images
+          .filter((img: any) => img.variantId === v.id)
+          .map((img: any) => ({
+            url: img.url,
+            is_primary: img.isPrimary,
+            display_order: img.displayOrder,
+          }));
+
+        return {
+          id: v.id,
+          sku: v.sku,
+          size: v.size,
+          color: v.color,
+          material: v.material,
+          price_override: v.priceOverride,
+          effective_price: v.priceOverride !== null ? v.priceOverride : (product.salePrice !== null ? product.salePrice : product.basePrice),
+          stock: v.stock,
+          in_stock: v.stock > 0,
+          images: variantImages,
+        };
+      }),
       meta_title: product.metaTitle,
       meta_description: product.metaDescription,
     });

@@ -3,8 +3,8 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { db, schema } from '@/lib/db';
 import { eq, and } from 'drizzle-orm';
-import ImageGallery from '@/components/product/ImageGallery';
-import ProductSchema from '@/components/product/ProductSchema';
+import CategoryProductListing from '@/components/category/CategoryProductListing';
+import ProductDetailView from '@/components/product/ProductDetailView';
 import { Metadata } from 'next';
 
 interface UnifiedPageProps {
@@ -108,9 +108,9 @@ export default async function UnifiedPage({ params }: UnifiedPageProps) {
     .limit(1);
 
   if (subCategory) {
-    // Render the subcategory placeholder page
+    // Render the subcategory product listing
     return (
-      <div className="placeholder-page">
+      <div className="category-page">
         <nav className="breadcrumb" aria-label="breadcrumb">
           <Link href="/">Home</Link>
           <span className="breadcrumb-separator">›</span>
@@ -118,11 +118,8 @@ export default async function UnifiedPage({ params }: UnifiedPageProps) {
           <span className="breadcrumb-separator">›</span>
           <span>{subCategory.name}</span>
         </nav>
-        <h1 className="placeholder-title">{subCategory.name}</h1>
-        <p className="placeholder-text">Products coming in Wave 2</p>
-        <Link href="/" className="btn-primary">
-          Back to Home
-        </Link>
+        <h1 className="category-title">{subCategory.name}</h1>
+        <CategoryProductListing categorySlug={subCategory.slug} />
       </div>
     );
   }
@@ -150,27 +147,11 @@ export default async function UnifiedPage({ params }: UnifiedPageProps) {
     .where(eq(schema.productImages.productId, product.id))
     .orderBy(schema.productImages.displayOrder);
 
-  // Perform price and GST calculations
-  const basePriceNum = parseFloat(product.basePrice);
-  const salePriceNum = product.salePrice ? parseFloat(product.salePrice) : null;
-  const gstRateNum = parseFloat(product.gstRate || '12.00');
-
-  const gstMultiplier = 1 + gstRateNum / 100;
-  
-  // Format prices as Indian Rupees (INR)
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-IN', {
-      style: 'currency',
-      currency: 'INR',
-      maximumFractionDigits: 0,
-    }).format(amount);
-  };
-
-  const formattedBaseEx = formatCurrency(basePriceNum);
-  const formattedBaseIncl = formatCurrency(basePriceNum * gstMultiplier);
-  
-  const formattedSaleEx = salePriceNum !== null ? formatCurrency(salePriceNum) : null;
-  const formattedSaleIncl = salePriceNum !== null ? formatCurrency(salePriceNum * gstMultiplier) : null;
+  // Fetch product variants
+  const variants = await db
+    .select()
+    .from(schema.productVariants)
+    .where(eq(schema.productVariants.productId, product.id));
 
   // Breadcrumbs: if product category differs from the root category in segment 1, fetch subcategory
   let breadcrumbs = (
@@ -205,86 +186,62 @@ export default async function UnifiedPage({ params }: UnifiedPageProps) {
     }
   }
 
-  // Construct structured product object for Schema
-  const productWithRelations = {
-    ...product,
+  // Format objects for client component
+  const formattedProduct = {
+    id: product.id,
+    name: product.name,
+    slug: product.slug,
     category: {
       name: category.name,
       slug: category.slug,
     },
-    images: images.map((img: any) => ({
-      url: img.url,
-      is_primary: img.isPrimary,
-      display_order: img.displayOrder,
-    })),
+    short_description: product.shortDescription,
+    full_description: product.fullDescription,
+    base_price: product.basePrice,
+    sale_price: product.salePrice,
+    gst_rate: product.gstRate,
+    meta_title: product.metaTitle,
+    meta_description: product.metaDescription,
   };
+
+  const formattedImages = images.map((img: any) => ({
+    url: img.url,
+    is_primary: img.isPrimary ?? false,
+    display_order: img.displayOrder ?? 0,
+    variant_id: img.variantId,
+  }));
+
+  const formattedVariants = variants.map((v: any) => {
+    const variantImages = images
+      .filter((img: any) => img.variantId === v.id)
+      .map((img: any) => ({
+        url: img.url,
+        is_primary: img.isPrimary ?? false,
+        display_order: img.displayOrder ?? 0,
+      }));
+
+    return {
+      id: v.id,
+      sku: v.sku,
+      size: v.size,
+      color: v.color,
+      material: v.material,
+      price_override: v.priceOverride,
+      effective_price: v.priceOverride !== null ? v.priceOverride : (product.salePrice !== null ? product.salePrice : product.basePrice),
+      stock: v.stock,
+      in_stock: v.stock > 0,
+      images: variantImages,
+    };
+  });
 
   return (
     <div className="pdp-container">
-      {/* Google SEO JSON-LD Product Schema Markup */}
-      <ProductSchema product={productWithRelations} />
-
       {breadcrumbs}
-
-      <div className="pdp-grid">
-        {/* Left Column: Interactive Image Gallery */}
-        <div className="pdp-gallery-column">
-          <ImageGallery images={productWithRelations.images} productName={product.name} />
-        </div>
-
-        {/* Right Column: Info & Actions */}
-        <div className="pdp-info-column">
-          <h1 className="product-title">{product.name}</h1>
-          
-          {/* Price Section */}
-          <div className="product-price-section">
-            {salePriceNum !== null ? (
-              <div className="price-display-wrapper">
-                <span className="price-sale-incl">{formattedSaleIncl}</span>
-                <span className="price-base-strike">{formattedBaseIncl}</span>
-                <div className="price-gst-subtext">
-                  <span>Inclusive of {product.gstRate}% GST</span>
-                  <span className="price-ex-gst">({formattedSaleEx} ex-GST)</span>
-                </div>
-              </div>
-            ) : (
-              <div className="price-display-wrapper">
-                <span className="price-active-incl">{formattedBaseIncl}</span>
-                <div className="price-gst-subtext">
-                  <span>Inclusive of {product.gstRate}% GST</span>
-                  <span className="price-ex-gst">({formattedBaseEx} ex-GST)</span>
-                </div>
-              </div>
-            )}
-          </div>
-
-          <div className="product-description-divider"></div>
-
-          {/* Descriptions */}
-          {product.shortDescription && (
-            <p className="product-short-description">{product.shortDescription}</p>
-          )}
-
-          {product.fullDescription && (
-            <div className="product-full-description-wrapper">
-              <h3 className="section-subtitle">Product Details</h3>
-              <p className="product-full-description">{product.fullDescription}</p>
-            </div>
-          )}
-
-          <div className="product-actions-divider"></div>
-
-          {/* Add to Cart Actions */}
-          <div className="add-to-cart-wrapper">
-            <div className="tooltip-container">
-              <button className="btn-add-to-cart" disabled>
-                Add to Cart
-              </button>
-              <span className="tooltip-text">Select a variant</span>
-            </div>
-          </div>
-        </div>
-      </div>
+      <ProductDetailView
+        product={formattedProduct}
+        initialImages={formattedImages}
+        variants={formattedVariants}
+      />
     </div>
   );
 }
